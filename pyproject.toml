@@ -6,7 +6,7 @@ readme = "README.md"
 authors = [
     { name = "Guru01100101", email = "madness.monk93@gmail.com" }
 ]
-requires-python = ">=3.14"
+requires-python = ">=3.13,<3.14"
 dependencies = [
     "aiofiles>=25.1.0",
     "aiopath>=0.7.7",
@@ -14,9 +14,5 @@ dependencies = [
     "requests>=2.34.2",
 ]
 
-[project.scripts]
-goit-cs-hw-05 = "goit_cs_hw_05:main"
-
-[build-system]
-requires = ["uv_build>=0.13.6,<0.14.0"]
-build-backend = "uv_build"
+[tool.uv]
+package = false
