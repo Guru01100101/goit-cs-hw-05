@@ -9,7 +9,10 @@ from html.parser import HTMLParser
 import matplotlib.pyplot as plt
 import requests
 
-EXAMPLE_URL = "https://uk.wikipedia.org/wiki/MapReduce"
+EXAMPLE_URL = (
+    "https://zakon.rada.gov.ua/laws/show/"
+    "254%D0%BA/96-%D0%B2%D1%80/print"
+)
 DEFAULT_TOP = 10
 DEFAULT_WORKERS = 4
 REQUEST_TIMEOUT = 30
@@ -89,8 +92,11 @@ class HTMLTextExtractor(HTMLParser):
 
 def parse_args() -> argparse.Namespace:
     parser = HelpOnErrorParser(
-        description="Analyze word frequency in a text from a URL with MapReduce.",
-        epilog=f"example: %(prog)s {EXAMPLE_URL} --top 10",
+        description=(
+            "Analyze word frequency in a text from a URL with MapReduce."
+        ),
+        # argparse applies %-formatting to the epilog, so escape the URL.
+        epilog=f"example: %(prog)s {EXAMPLE_URL.replace('%', '%%')} --top 10",
     )
     parser.add_argument("url", help="URL of a text or HTML page to analyze")
     parser.add_argument(
@@ -106,8 +112,13 @@ def parse_args() -> argparse.Namespace:
         help=f"number of worker threads (default: {DEFAULT_WORKERS})",
     )
     parser.add_argument(
-        "--save", metavar="FILE", help="save the chart to FILE instead of showing it"
+        "--save",
+        metavar="FILE",
+        help="save the chart to FILE instead of showing it",
     )
+    if len(sys.argv) == 1:
+        parser.print_help()
+        parser.exit()
     return parser.parse_args()
 
 
@@ -135,7 +146,9 @@ def split_into_words(text: str) -> list[str]:
 def split_into_chunks(words: list[str], chunks_count: int) -> list[list[str]]:
     """Split the word list into roughly equal chunks, one per worker."""
     chunk_size = max(1, -(-len(words) // chunks_count))  # ceiling division
-    return [words[i : i + chunk_size] for i in range(0, len(words), chunk_size)]
+    return [
+        words[i:i + chunk_size] for i in range(0, len(words), chunk_size)
+    ]
 
 
 def map_function(words: list[str]) -> list[tuple[str, int]]:
@@ -180,8 +193,9 @@ def visualize_top_words(
     save_to: str | None = None,
 ) -> None:
     """Draw a horizontal bar chart of the most frequent words."""
-    top_words = sorted(word_counts.items(), key=lambda item: item[1], reverse=True)
-    top_words = top_words[:top_n]
+    top_words = sorted(
+        word_counts.items(), key=lambda item: item[1], reverse=True
+    )[:top_n]
     words = [word for word, _ in top_words]
     counts = [count for _, count in top_words]
 
@@ -215,7 +229,9 @@ def main() -> None:
         logger.error("No words found in the text.")
         sys.exit(1)
     logger.info(
-        "Found %d words, %d unique.", sum(word_counts.values()), len(word_counts)
+        "Found %d words, %d unique.",
+        sum(word_counts.values()),
+        len(word_counts),
     )
 
     visualize_top_words(word_counts, args.top, args.save)
