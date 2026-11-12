@@ -75,13 +75,12 @@ async def copy_file(file: AsyncPath, output: AsyncPath) -> None:
                 try:
                     # "xb" fails if the file already exists, so concurrent
                     # copies with the same name never overwrite each other.
-                    dst = await aiofiles.open(target, "xb")
+                    async with aiofiles.open(target, "xb") as dst:
+                        while chunk := await src.read(CHUNK_SIZE):
+                            await dst.write(chunk)
                     break
                 except FileExistsError:
                     copy_number += 1
-            async with dst:
-                while chunk := await src.read(CHUNK_SIZE):
-                    await dst.write(chunk)
     except OSError as error:
         logger.error("Failed to copy %s: %s", file, error)
 
